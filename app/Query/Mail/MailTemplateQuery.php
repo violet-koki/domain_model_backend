@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Query\MailTemplate;
+namespace App\Query\Mail;
 
 use App\Models\MailTemplate;
 use Illuminate\Support\Collection;

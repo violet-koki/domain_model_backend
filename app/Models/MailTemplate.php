@@ -53,4 +53,13 @@ class MailTemplate extends Model
     protected $casts = [
         'template_type' => TemplateType::class,
     ];
+    /**
+     * テンプレートに紐づくテンプレート変数を取得
+     *
+     * @return HasMany|Collection
+     */
+    public function MailTemplateVariables(): HasMany|Collection
+    {
+        return $this->hasMany(MailTemplateVariable::class);
+    }
 }

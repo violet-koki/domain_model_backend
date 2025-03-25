@@ -2,7 +2,6 @@
 
 namespace App\Domain\User;
 
-
 class UserColumnList
 {
     // 特殊な処理が必要なカラム
@@ -10,11 +9,27 @@ class UserColumnList
         'address',
         'work_address',
         'birthday',
-        'doctor_registration_date',
         'expired_date',
         'work_prefecture',
         'work_zipcode',
-        'gender'
+    ];
+
+    // ユーザーテーブルに存在するすべてのカラム名
+    private const ALL_USER_COLUMNS = [
+        'certification_number',
+        'name',
+        'name_kana',
+        'gender',
+        'birthday',
+        'work_name',
+        'work_section',
+        'work_zipcode',
+        'work_prefecture',
+        'work_address',
+        'work_phone',
+        'mail',
+        'address',
+        'expired_date'
     ];
 
     /** @var array<string> ユーザーカラムのリスト */
@@ -42,6 +57,19 @@ class UserColumnList
     public static function fromArray(array $columns): self
     {
         return new self($columns);
+    }
+
+    /**
+     * テンプレート変数リストと利用可能なユーザーカラムの交差を取得し、
+     * その結果からUserColumnListオブジェクトを生成
+     * 
+     * @param array<string> $templateVariables テンプレート内の変数名リスト
+     * @return self 交差したカラムを含むUserColumnListオブジェクト
+     */
+    public static function fromTemplateVariables(array $templateVariables): self
+    {
+        $intersection = array_intersect(self::ALL_USER_COLUMNS, $templateVariables);
+        return new self(array_values($intersection));
     }
 
     /**
@@ -76,13 +104,6 @@ class UserColumnList
         return in_array('birthday', $this->columns);
     }
 
-    /**
-     * 医師登録日カラムを含むかどうか
-     */
-    public function hasDoctorRegistrationDate(): bool
-    {
-        return in_array('doctor_registration_date', $this->columns);
-    }
 
     /**
      * 期限日カラムを含むかどうか
@@ -108,13 +129,6 @@ class UserColumnList
         return in_array('work_zipcode', $this->columns);
     }
 
-    /**
-     * 性別カラムを含むかどうか
-     */
-    public function hasGender(): bool
-    {
-        return in_array('gender', $this->columns);
-    }
 
     /**
      * 特殊な処理が不要な標準カラムのリストを取得

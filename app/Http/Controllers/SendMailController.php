@@ -2,20 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Mail\MailService;
 use Illuminate\Http\Request;
+use App\Http\Requests\BulkEmailRequest;
 
 class SendMailController extends Controller
 {
+    private $mailService;
+    public function __construct(MailService $mailService)
+    {
+        $this->mailService = $mailService;
+    }
     /**
      * メール一括送信
      *
      * @param  SendBulkEmailRequest $request
      * @return Response
      */
-    public function sendBulkEmail()
+    public function sendBulkEmail(BulkEmailRequest $request)
     {
-        dd('test');
-        // $this->mailTemplateService->sendBulkEmail($request->validated());
-        // return response('', 204);
+        $this->mailService->sendBulkEmail($request->validated());
+        return response('', 204);
     }
 }
