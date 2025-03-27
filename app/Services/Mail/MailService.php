@@ -6,16 +6,23 @@ use App\Query\Mail\MailTemplateQuery;
 use App\Consts\TemplateType;
 use App\Domain\User\UserColumnList;
 use App\Domain\Application\ApplicationColumnList;
+use App\Domain\Email\Destination;
 use App\Domain\Email\SESSystem;
+use App\Consts\DestinationType;
+use App\Query\User\UserQuery;
+use Illuminate\Support\Collection;
 
 class MailService
 {
     private $mailTemplateQuery;
+    private $userQuery;
     public function __construct(
-        MailTemplateQuery $mailTemplateQuery
+        MailTemplateQuery $mailTemplateQuery,
+        UserQuery $userQuery
     )
     {
         $this->mailTemplateQuery = $mailTemplateQuery;
+        $this->userQuery = $userQuery;
     }
     /**
      * SESシステムインスタンスを生成する
@@ -36,9 +43,8 @@ class MailService
         // ドメインオブジェクトを使って、テンプレート変数とカラムの交差を取得
         $userColumnList = UserColumnList::fromTemplateVariables($variableNameList);
         $applicationColumnList = ApplicationColumnList::fromTemplateVariables($variableNameList);
-
-        // // 注：このgetDestinationメソッドも、UserColumnListを受け入れるように修正が必要
-        $users = $this->getDestination($request, $userColumnList)->sortBy('id')->values();
+        $destination = Destination::fromRequest($request, $userColumnList);
+        $users = $this->getUsersByDestination($destination)->sortBy('id')->values();
         $totalUserIds = $users->pluck('id');
         // // SesV2Clientを作成、AWSリソースを操作
         $mail = $this->createSESSystem();
@@ -94,5 +100,46 @@ class MailService
             'user_ids' => $userIds,
             'action' => 'SendBulkEmail'
         ]);
+    }
+
+    /**
+     * 送信先情報からユーザーを取得
+     *
+     * @param Destination $destination 送信先情報
+     * @return Collection ユーザーのコレクション
+     */
+    private function getUsersByDestination(Destination $destination): Collection
+    {
+        $type = $destination->getType();
+        $targets = $destination->getTargets();
+        $userColumns = $destination->getUserColumnsArray();
+
+        return match ($type) {
+            DestinationType::UserID => $this->userQuery->fetchUsersByIds($targets, $userColumns),
+            DestinationType::CertificationNumber => $this->userQuery->fetchUsersByCertificationNumbers($targets, $userColumns),
+        };
+    }
+
+
+    /**
+     * 一括送信する際の送付先の情報を取得
+     *
+     * @param Destination $destination
+     * @return Collection
+     */
+    private function getDestination(Destination $destination): Collection
+    {
+        // UserColumnListからデータベースクエリ用のカラムを取得
+        $dbColumns = $destination->getUserColumns()->toDatabaseColumns();
+        $targets = $destination->getTargets();
+
+        // 送信先タイプに応じてユーザーを取得
+        switch ($destination->getType()) {
+            case DestinationType::UserID:
+                return $this->userQuery->fetchUsersByIds($targets, $dbColumns);
+            case DestinationType::CertificationNumber:
+            default:
+                return $this->userQuery->fetchUsersByCertificationNumbers($targets, $dbColumns);
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\Mail\MailService;
 use Illuminate\Http\Request;
 use App\Http\Requests\BulkEmailRequest;
+use Illuminate\Http\Response;
 
 class SendMailController extends Controller
 {
@@ -16,7 +17,7 @@ class SendMailController extends Controller
     /**
      * メール一括送信
      *
-     * @param  SendBulkEmailRequest $request
+     * @param  BulkEmailRequest $request
      * @return Response
      */
     public function sendBulkEmail(BulkEmailRequest $request)

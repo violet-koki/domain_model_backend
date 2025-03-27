@@ -2,14 +2,27 @@
 
 namespace App\Domain\Email;
 
-use App\Domain\User\User;
 use App\Domain\User\UserColumnList;
 use App\Domain\Application\ApplicationColumnList;
 use App\Domain\Screening\ScreeningColumnList;
 use Illuminate\Support\Collection;
+use Aws\SesV2\SesV2Client;
+use Aws\SesV2\Exception\SesV2Exception;
+use App\Exceptions\SimpleEmailServiceException;
+use App\Models\User;
+
 
 class SESSystem
 {
+    private SesV2Client $sesClient;
+
+    /**
+     * コンストラクタ
+     */
+    public function __construct()
+    {
+        $this->sesClient = self::getClient();
+    }
     public function sendBulkBatchEmail(
         Collection $users,
         UserColumnList $userColumns,
@@ -17,6 +30,7 @@ class SESSystem
         string $templateName,
         Collection $totalUserIds
     ): void {
+        dd('test1');
         $replacementTemplateDataList = $users->mapWithKeys(function (User $user) use (
             $userColumns,
             $applicationColumns,
@@ -45,9 +59,32 @@ class SESSystem
 
             return [$user->getId() => $templateData];
         })->toArray();
+        dd($replacementTemplateDataList);
 
         $this->sendBulkEmail($users, $totalUserIds, $templateName, $replacementTemplateDataList);
     }
+    /**
+     * SesV2Clientを取得
+     *
+     * @return SesV2Client
+     */
+    private static function getClient(): SesV2Client
+    {
+        try {
+            return new SesV2Client([
+                'version' => config('services.ses.version'),
+                'region' => config('services.ses.region'),
+                'endpoint' => config('services.ses.endpoint'),
+                'retries' => config('services.retries'),
+                'http' => [
+                    'connect_timeout' => config('services.http.connect_timeout'),
+                ]
+            ]);
+        } catch (SesV2Exception $e) {
+            throw new SimpleEmailServiceException();
+        }
+    }
+
 
     private function getUserTemplateData(User $user, UserColumnList $columns): array
     {
@@ -203,5 +240,26 @@ class SESSystem
             ]);
             throw new SimpleEmailServiceException();
         }
+    }
+
+    /**
+     * テンプレート置換データのJSONを取得
+     *
+     * @param array $templateData
+     * @return string
+     */
+    private function getTemplateDataJson(array $templateData): string
+    {
+        if (app()->isLocal()) {
+            $tmpTemplateData = $templateData;
+            $templateData = [];
+            foreach ($tmpTemplateData as $key => $val) {
+                $templateData[] = ['Name' => $key, 'Value' => $val];
+            }
+            $templateDataJson = json_encode($templateData);
+        } else {
+            $templateDataJson = json_encode($templateData, JSON_FORCE_OBJECT);
+        }
+        return $templateDataJson;
     }
 }

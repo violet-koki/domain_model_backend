@@ -32,6 +32,29 @@ class UserColumnList
         'expired_date'
     ];
 
+    // 仮想カラム'address'に対応する実際のDBカラム
+    private const ADDRESS_COLUMNS = [
+        'work_zipcode',
+        'work_prefecture',
+        'work_address1',
+        'work_address2',
+        'work_building',
+        'work_name',
+        'work_section',
+        'zipcode',
+        'prefecture',
+        'address1',
+        'address2',
+        'building',
+        'send_flag'
+    ];
+
+    // 仮想カラム'work_address'に対応する実際のDBカラム
+    private const WORK_ADDRESS_COLUMNS = [
+        'work_address1',
+        'work_address2'
+    ];
+
     /** @var array<string> ユーザーカラムのリスト */
     private array $columns;
 
@@ -150,5 +173,31 @@ class UserColumnList
     public function getAllColumns(): array
     {
         return $this->columns;
+    }
+
+    /**
+     * データベースクエリ用のカラムリストを取得
+     * 仮想カラムを実際のデータベースカラムに変換
+     *
+     * @return array<string> クエリ用のカラムリスト
+     */
+    public function toDatabaseColumns(): array
+    {
+        $databaseColumns = $this->columns;
+
+        // address仮想カラム処理
+        if (in_array('address', $databaseColumns)) {
+            $databaseColumns = array_diff($databaseColumns, ['address']);
+            $databaseColumns = array_merge($databaseColumns, self::ADDRESS_COLUMNS);
+        }
+
+        // work_address仮想カラム処理
+        if (in_array('work_address', $databaseColumns)) {
+            $databaseColumns = array_diff($databaseColumns, ['work_address']);
+            $databaseColumns = array_merge($databaseColumns, self::WORK_ADDRESS_COLUMNS);
+        }
+
+        // 重複を除去
+        return array_values(array_unique($databaseColumns));
     }
 }
