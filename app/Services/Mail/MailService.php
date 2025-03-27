@@ -6,7 +6,7 @@ use App\Query\Mail\MailTemplateQuery;
 use App\Consts\TemplateType;
 use App\Domain\User\UserColumnList;
 use App\Domain\Application\ApplicationColumnList;
-
+use App\Domain\Email\SESSystem;
 
 class MailService
 {
@@ -16,6 +16,15 @@ class MailService
     )
     {
         $this->mailTemplateQuery = $mailTemplateQuery;
+    }
+    /**
+     * SESシステムインスタンスを生成する
+     *
+     * @return SESSystem SESシステムインスタンス
+     */
+    private function createSESSystem(): SESSystem
+    {
+        return new SESSystem();
     }
     public function sendBulkEmail(array $request)
     {
@@ -27,13 +36,12 @@ class MailService
         // ドメインオブジェクトを使って、テンプレート変数とカラムの交差を取得
         $userColumnList = UserColumnList::fromTemplateVariables($variableNameList);
         $applicationColumnList = ApplicationColumnList::fromTemplateVariables($variableNameList);
-        dd($userColumnList);
 
         // // 注：このgetDestinationメソッドも、UserColumnListを受け入れるように修正が必要
-        // $users = $this->getDestination($request, $userColumnList)->sortBy('id')->values();
-        // $totalUserIds = $users->pluck('id');
+        $users = $this->getDestination($request, $userColumnList)->sortBy('id')->values();
+        $totalUserIds = $users->pluck('id');
         // // SesV2Clientを作成、AWSリソースを操作
-        // $mail = $this->createMailSystem();
+        $mail = $this->createMailSystem();
         // SESの仕様の関係で、メール送付先は14件ごと渡す
         $targets = $users->chunk(14);
         foreach ($targets as $chunk) {

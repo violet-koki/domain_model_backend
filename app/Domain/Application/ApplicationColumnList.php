@@ -4,9 +4,7 @@ namespace App\Domain\Application;
 
 /**
  * アプリケーションに関連するカラムリストを表すバリューオブジェクト
- * 
- * このクラスはEmailテンプレートで使用されるアプリケーション関連のカラムを管理します。
- * 特殊な処理が必要なカラム（passed_examine_number, attendance_numberなど）と標準的なカラムを区別します。
+ *
  */
 class ApplicationColumnList
 {
@@ -54,7 +52,7 @@ class ApplicationColumnList
     /**
      * テンプレート変数リストと利用可能なアプリケーションカラムの交差を取得し、
      * その結果からApplicationColumnListオブジェクトを生成
-     * 
+     *
      * @param array<string> $templateVariables テンプレート内の変数名リスト
      * @return self 交差したカラムを含むApplicationColumnListオブジェクト
      */
@@ -90,7 +88,7 @@ class ApplicationColumnList
 
     /**
      * 特殊な処理が不要な標準カラムのリストを取得
-     * 
+     *
      * @return array<string> 標準カラムのリスト
      */
     public function getStandardColumns(): array
@@ -102,7 +100,7 @@ class ApplicationColumnList
 
     /**
      * すべてのカラムを取得
-     * 
+     *
      * @return array<string> すべてのカラムのリスト
      */
     public function getAllColumns(): array

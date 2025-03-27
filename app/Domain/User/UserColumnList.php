@@ -4,7 +4,7 @@ namespace App\Domain\User;
 
 class UserColumnList
 {
-    // 特殊な処理が必要なカラム
+    // 処理が必要なカラム
     private const SPECIAL_COLUMNS = [
         'address',
         'work_address',
@@ -62,7 +62,7 @@ class UserColumnList
     /**
      * テンプレート変数リストと利用可能なユーザーカラムの交差を取得し、
      * その結果からUserColumnListオブジェクトを生成
-     * 
+     *
      * @param array<string> $templateVariables テンプレート内の変数名リスト
      * @return self 交差したカラムを含むUserColumnListオブジェクト
      */
@@ -132,7 +132,7 @@ class UserColumnList
 
     /**
      * 特殊な処理が不要な標準カラムのリストを取得
-     * 
+     *
      * @return array<string> 標準カラムのリスト
      */
     public function getStandardColumns(): array
@@ -144,7 +144,7 @@ class UserColumnList
 
     /**
      * すべてのカラムを取得
-     * 
+     *
      * @return array<string> すべてのカラムのリスト
      */
     public function getAllColumns(): array
