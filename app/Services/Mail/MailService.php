@@ -41,7 +41,7 @@ class MailService
         $users = $this->getDestination($request, $userColumnList)->sortBy('id')->values();
         $totalUserIds = $users->pluck('id');
         // // SesV2Clientを作成、AWSリソースを操作
-        $mail = $this->createMailSystem();
+        $mail = $this->createSESSystem();
         // SESの仕様の関係で、メール送付先は14件ごと渡す
         $targets = $users->chunk(14);
         foreach ($targets as $chunk) {
