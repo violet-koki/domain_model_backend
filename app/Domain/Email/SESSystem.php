@@ -4,12 +4,15 @@ namespace App\Domain\Email;
 
 use App\Domain\User\UserColumnList;
 use App\Domain\Application\ApplicationColumnList;
-use App\Domain\Screening\ScreeningColumnList;
 use Illuminate\Support\Collection;
 use Aws\SesV2\SesV2Client;
 use Aws\SesV2\Exception\SesV2Exception;
 use App\Exceptions\SimpleEmailServiceException;
-use App\Models\User;
+use App\Models\User as UserModel;
+use App\Domain\User\User;
+use App\Domain\Application\Application;
+use Illuminate\Support\Facades\Log;
+
 
 
 class SESSystem
@@ -30,12 +33,12 @@ class SESSystem
         string $templateName,
         Collection $totalUserIds
     ): void {
-        dd('test1');
-        $replacementTemplateDataList = $users->mapWithKeys(function (User $user) use (
+        $replacementTemplateDataList = $users->mapWithKeys(function (UserModel $userModel) use (
             $userColumns,
             $applicationColumns,
         ) {
             $templateData = [];
+            $user = User::fromModel($userModel);
 
             // ユーザー情報の設定
             if (!$userColumns->isEmpty()) {
@@ -118,27 +121,28 @@ class SESSystem
             $templateData['work_zipcode'] = $user->getFormattedWorkZipCode();
         }
 
-        // 性別情報
-        if ($columns->hasGender()) {
-            $templateData['gender'] = $user->getFormattedGender();
-        }
-
-        // その他の標準フィールド
-        foreach ($columns->getStandardColumns() as $column) {
-            $templateData[$column] = $user->getProperty($column);
-        }
 
         return $templateData;
     }
 
+
+    /**
+     * 申請情報からテンプレートデータを取得
+     *
+     * @param int $userId ユーザーID
+     * @param ApplicationColumnList $columns 列設定
+     * @return array
+     */
     private function getApplicationTemplateData(int $userId, ApplicationColumnList $columns): array
     {
         $templateData = [];
-        $application = $this->applicationRepository->fetchApplication(['user_id' => $userId]);
+
+        // 申込の取得
+        $application = Application::fetchApplication(['user_id' => $userId]);
 
         // 合格試験番号
         if ($columns->hasPassedExamineNumber()) {
-            $passedApplication = $this->applicationRepository->fetchLatestPassedApplication($userId);
+            $passedApplication = Application::fetchLatestPassedApplication($userId);
             $templateData['passed_examine_number'] =
                 $passedApplication && $passedApplication->isPassFlagEnabled() ?
                 $passedApplication->getExamineNumber() :
@@ -147,28 +151,11 @@ class SESSystem
 
         // 出席番号
         if ($columns->hasAttendanceNumber()) {
-            $attendanceApplication = $this->applicationRepository->fetchLatestCompletedApplication($userId);
+            $attendanceApplication = Application::fetchLatestCompletedApplication($userId);
             $templateData['attendance_number'] =
                 $attendanceApplication && $attendanceApplication->isAttendanceFlagEnabled() ?
                 $attendanceApplication->getAttendanceNumber() :
                 null;
-        }
-
-        // その他の標準フィールド
-        foreach ($columns->getStandardColumns() as $column) {
-            $templateData[$column] = $application ? $application->getProperty($column) : null;
-        }
-
-        return $templateData;
-    }
-
-    private function getScreeningTemplateData(int $userId, ScreeningColumnList $columns): array
-    {
-        $templateData = [];
-        $application = $this->applicationRepository->fetchApplication(['user_id' => $userId]);
-
-        if ($columns->hasExpAssoc() && $application && $application->getScreening()) {
-            $templateData['exp_assoc'] = $application->getScreening()->getExpAssoc()->description();
         }
 
         return $templateData;

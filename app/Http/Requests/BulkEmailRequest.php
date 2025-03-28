@@ -24,6 +24,8 @@ class BulkEmailRequest extends FormRequest
         return [
             'id' => ['required', 'integer'],
             'destination_type' => ['required', 'between:0, 1'],
+            'targets' => ['required', 'array'],
+            'targets.*' => ['required', 'string'],
         ];
     }
 }

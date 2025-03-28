@@ -16,7 +16,6 @@ enum TemplateType: int
      */
     public function description(): string
     {
-        dd('test');
         return match ($this) {
             self::System => 'システム',
             self::BatchSending => '一斉送信',

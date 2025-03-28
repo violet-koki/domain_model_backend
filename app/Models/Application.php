@@ -18,6 +18,7 @@ use Carbon\Carbon;
  * @property Carbon|null $finish_date
  * @property Carbon|string|null $examine_date
  * @property boolean|null $examine_flag
+ * @property boolean|null $pass_flag
  */
 class Application extends Model
 {
