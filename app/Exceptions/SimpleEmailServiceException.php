@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use App\Exceptions\BaseException;
 use Illuminate\Http\Response;
+use Throwable;
 
 class SimpleEmailServiceException extends BaseException
 {
@@ -18,9 +19,13 @@ class SimpleEmailServiceException extends BaseException
 
     /**
      * コンストラクタ
+     * 
+     * @param string|null $customMessage カスタムエラーメッセージ
+     * @param Throwable|null $previous 元の例外
      */
-    public function __construct()
+    public function __construct(?string $customMessage = null, ?Throwable $previous = null)
     {
-        parent::__construct($this->errorMessage);
+        $message = $customMessage ?: $this->errorMessage;
+        parent::__construct($message, 0, $previous);
     }
 }

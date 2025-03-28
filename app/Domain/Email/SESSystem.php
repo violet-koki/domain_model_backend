@@ -62,7 +62,6 @@ class SESSystem
 
             return [$user->getId() => $templateData];
         })->toArray();
-        dd($replacementTemplateDataList);
 
         $this->sendBulkEmail($users, $totalUserIds, $templateName, $replacementTemplateDataList);
     }
@@ -84,7 +83,7 @@ class SESSystem
                 ]
             ]);
         } catch (SesV2Exception $e) {
-            throw new SimpleEmailServiceException();
+            throw new SimpleEmailServiceException("メール送信に失敗しました: " . $e->getMessage(), $e);
         }
     }
 
@@ -183,8 +182,8 @@ class SESSystem
             return [
                 'Destination' => [
                     'ToAddresses' => [$user->mail],
-                    'CcAddresses' => [],
-                    'BccAddresses' => [config('mail.bcc.address')]
+                    'CcAddresses' => ['test1@example.com'],
+                    'BccAddresses' => ['test2@example.com']
                 ],
                 'ReplacementEmailContent' => [
                     'ReplacementTemplate' => [
@@ -197,6 +196,7 @@ class SESSystem
         $leftOverUserIds = $totalUserIds->filter(function ($id) use ($userIds) {
             return !($id <= $userIds->max() || $userIds->contains($id));
         });
+        // dd($templateName, $defaultTemplateData, $bulkEmailEntries);
 
         try {
             $this->sesClient->sendBulkEmail(
@@ -205,7 +205,8 @@ class SESSystem
                     'DefaultContent' => [
                         'Template' => [
                             'TemplateName' => $templateName,
-                            'TemplateData' => $this->getTemplateDataJson($defaultTemplateData),
+                            // 'TemplateData' => $this->getTemplateDataJson($defaultTemplateData),
+                            'TemplateData' => app()->isLocal() ? "[]" : "{}"
                         ]
                     ],
                     'BulkEmailEntries' => $bulkEmailEntries
@@ -225,7 +226,7 @@ class SESSystem
                 'unsent_user_ids' => $leftOverUserIds,
                 'action' => 'SendBulkEmail'
             ]);
-            throw new SimpleEmailServiceException();
+            throw new SimpleEmailServiceException("メール送信に失敗しました: " . $e->getMessage(), $e);
         }
     }
 
